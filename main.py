@@ -3,6 +3,7 @@ import numpy as np
 import threading
 import gym
 import os
+import multiprocessing
 from scipy.misc import imresize
 from tensorboardX import SummaryWriter
 import a3c
@@ -23,7 +24,7 @@ def main():
             os.makedirs(checkpoint_dir)
             print("Directory {} was created".format(checkpoint_dir))
 
-        n_threads = 4
+        n_threads = multiprocessing.cpu_count()
         input_shape = [80, 80, 1]
         output_dim = 3  # {1, 2, 3}
         global_network = a3c.A3CNetwork(name="global",
