@@ -7,6 +7,7 @@ import utils
 import a3c
 import tensorflow as tf
 import numpy as np
+import copy
 
 class Agent(threading.Thread):
 
@@ -38,12 +39,13 @@ class Agent(threading.Thread):
         self.episode = 0
         self.writer = SummaryWriter('runs/'+self.name)
 
-    def print(self, reward, max_prob, pi_loss, value_loss, entropy):
+    def print(self, reward, max_prob, pi_loss, value_loss, entropy, episode_step):
         self.writer.add_scalar('score', reward, self.episode)
         self.writer.add_scalar('max_prob', max_prob, self.episode)
         self.writer.add_scalar('pi_loss', pi_loss, self.episode)
         self.writer.add_scalar('value_loss', value_loss, self.episode)
         self.writer.add_scalar('entropy', entropy, self.episode)
+        self.writer.add_scalar('episode_step', episode_step, self.episode)
         message = "Agent(name={}, episode={}, reward={}, max_prob={})".format(self.name, self.episode, reward, max_prob)
         print(message)
 
@@ -56,7 +58,7 @@ class Agent(threading.Thread):
 
         s = self.env.reset()
         s = utils.pipeline(s)
-        state_diff = s
+        history = np.stack((s, s, s, s), axis=2)
 
         done = False
         total_reward = 0
@@ -70,7 +72,7 @@ class Agent(threading.Thread):
 
         while not done:
 
-            a, max_prob = self.choose_action(state_diff)
+            a, max_prob = self.choose_action(copy.deepcopy(history))
 
             total_max_prob += max_prob
             episode_step += 1
@@ -80,18 +82,18 @@ class Agent(threading.Thread):
             s2 = utils.pipeline(s2)
             total_reward += r
 
-            states.append(state_diff)
+            states.append(copy.deepcopy(history))
             actions.append(a)
             rewards.append(r)
 
-            state_diff = s2 - s
-            s = s2
+            history[:, :, :3] = history[:, :, 1:]
+            history[:, :, 3] = s2
 
             if r == -1 or r == 1 or done:
                 time_step += 1
 
                 if time_step >= 5 or done:
-                    pi_loss, value_loss, entropy = self.train(states, actions, rewards)
+                    pi_loss, value_loss, entropy = self.train(states, actions, rewards, done)
                     total_pi_loss += pi_loss
                     total_value_loss += value_loss
                     total_entropy += entropy
@@ -100,7 +102,7 @@ class Agent(threading.Thread):
                     time_step = 0
 
         total_max_prob /= episode_step
-        self.print(total_reward, total_max_prob, total_pi_loss, total_value_loss, total_entropy)
+        self.print(total_reward, total_max_prob, total_pi_loss, total_value_loss, total_entropy, episode_step)
 
     def run(self):
         while not self.coord.should_stop():
@@ -123,7 +125,7 @@ class Agent(threading.Thread):
 
         return act, max(action)
 
-    def train(self, states, actions, rewards):
+    def train(self, states, actions, rewards, done):
         states = np.array(states)
         actions = np.array(actions)
         rewards = np.array(rewards)

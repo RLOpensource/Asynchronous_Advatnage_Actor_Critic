@@ -16,8 +16,7 @@ def main():
     coord = tf.train.Coordinator()
 
     n_threads = multiprocessing.cpu_count()
-    #n_threads = 8
-    input_shape = [80, 80, 1]
+    input_shape = [80, 80, 4]
     output_dim = 3  # {1, 2, 3}
     global_network = a3c.A3CNetwork(name="global",
                                 input_shape=input_shape,

@@ -42,6 +42,7 @@ def pipeline(image, new_HW=(80, 80), height_range=(35, 193), bg=(144, 72, 17)):
     image = resize_image(image, new_HW)
     image = kill_background_grayscale(image, bg)
     image = np.expand_dims(image, axis=2)
+    image = np.reshape(image, new_HW)
 
     return image
 
@@ -91,7 +92,6 @@ def kill_background_grayscale(image, bg):
     image[~cond] = 1
 
     return image
-
 
 def discount_reward(rewards, gamma=0.99):
     """Returns discounted rewards
