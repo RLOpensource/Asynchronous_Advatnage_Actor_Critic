@@ -29,16 +29,17 @@ class A3CNetwork(object):
             
             net = tf.layers.flatten(net)
             net = tf.layers.dense(inputs=net, units=256, activation=tf.nn.relu)
-
+            
             self.action_prob = tf.layers.dense(inputs=net, units=output_dim, activation=tf.nn.softmax)
             self.values = tf.squeeze(tf.layers.dense(inputs=net, units=1, activation=None))
 
             single_action_prob = tf.reduce_sum(self.action_prob * action_onehot, axis=1)
+            clip_single_action_prob = tf.clip_by_value(single_action_prob, 1e-7, 1.0)
             entropy = - self.action_prob * tf.log(self.action_prob + 1e-7)
             entropy = tf.reduce_sum(entropy, axis=1)
 
-            log_action_prob = tf.log(single_action_prob + 1e-7)
-            maximize_objective = log_action_prob * self.advantage + entropy * 0.005
+            log_action_prob = tf.log(clip_single_action_prob)
+            maximize_objective = log_action_prob * self.advantage + entropy * 0.01
             self.actor_loss = -tf.reduce_mean(maximize_objective)
 
             self.value_loss = tf.losses.mean_squared_error(labels=self.rewards, predictions=self.values)
@@ -50,7 +51,8 @@ class A3CNetwork(object):
 
             # optimization
             self.total_loss = self.actor_loss + self.value_loss * .5
-            self.optimizer = tf.train.RMSPropOptimizer(learning_rate=0.01, decay=.99)
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+            #self.optimizer = tf.train.RMSPropOptimizer(learning_rate=0.001)
 
         var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=name)
         self.gradients = self.optimizer.compute_gradients(self.total_loss, var_list)

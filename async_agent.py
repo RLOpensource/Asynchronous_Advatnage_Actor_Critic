@@ -75,7 +75,7 @@ class Agent(threading.Thread):
             total_max_prob += max_prob
             episode_step += 1
 
-            s2, r, done, _ = self.env.step(a)
+            s2, r, done, _ = self.env.step(int(a+1))
 
             s2 = utils.pipeline(s2)
             total_reward += r
@@ -119,11 +119,13 @@ class Agent(threading.Thread):
         action = self.sess.run(self.local.action_prob, feed)
         action = np.squeeze(action)
 
-        return np.random.choice(np.arange(self.output_dim) + 1, p=action), max(action)
+        act = np.random.choice(self.output_dim, p=action)
+
+        return act, max(action)
 
     def train(self, states, actions, rewards):
         states = np.array(states)
-        actions = np.array(actions) - 1
+        actions = np.array(actions)
         rewards = np.array(rewards)
 
         feed = {
