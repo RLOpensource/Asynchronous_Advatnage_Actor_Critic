@@ -135,8 +135,6 @@ class Agent(threading.Thread):
         values = self.sess.run(self.local.values, feed)
 
         rewards = utils.discount_reward(rewards, gamma=0.99)
-        rewards -= np.mean(rewards)
-        rewards /= np.std(rewards)
 
         advantage = rewards - values
         advantage -= np.mean(advantage)
