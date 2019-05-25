@@ -2,3 +2,4 @@ runs/
 monitors/
 checkpoint/
 __pycache__/
+nohup.out
