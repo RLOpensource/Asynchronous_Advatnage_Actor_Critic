@@ -196,41 +196,6 @@ class Agent(threading.Thread):
 
         return act, max(action)
 
-    def train(self, states, actions, rewards, done):
-        states = np.array(states)
-        actions = np.array(actions)
-        rewards = np.array(rewards)
-
-        feed = {
-            self.local.states: states
-        }
-
-        values = self.sess.run(self.local.values, feed)
-
-        rewards = utils.discount_reward(rewards, gamma=0.99)
-
-        advantage = rewards - values
-        advantage -= np.mean(advantage)
-        advantage /= np.std(advantage) + 1e-8
-
-        feed = {
-            self.local.states: states,
-            self.local.actions: actions,
-            self.local.rewards: rewards,
-            self.local.advantage: advantage
-        }
-
-        gradients, pi_loss, value_loss, entropy = self.sess.run([self.local.gradients, self.local.pi_loss, self.local.mean_value_loss, self.local.entropy], feed)
-
-        feed = []
-        for (grad, _), (placeholder, _) in zip(gradients, self.global_network.gradients_placeholders):
-            feed.append((placeholder, grad))
-
-        feed = dict(feed)
-        self.sess.run(self.global_network.apply_gradients, feed)
-
-        return pi_loss, value_loss, entropy
-
     def train_with_done(self, states, actions, rewards, dones):
         states = np.array(states)
         actions = np.array(actions)
