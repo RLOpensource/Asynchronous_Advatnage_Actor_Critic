@@ -15,7 +15,7 @@ def main():
     sess = tf.InteractiveSession()
     coord = tf.train.Coordinator()
 
-    n_threads = 1#multiprocessing.cpu_count()
+    n_threads = multiprocessing.cpu_count()
     input_shape = [80, 80, 4]
     output_dim = 3  # {1, 2, 3}
     global_network = a3c.A3CNetwork(name="global",

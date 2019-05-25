@@ -107,6 +107,7 @@ class Agent(threading.Thread):
         self.print(total_reward, total_max_prob, total_pi_loss, total_value_loss, total_entropy, episode_step)
 
     def run(self):
+        self.sess.run(self.global_to_local)
         
         s = self.env.reset()
         s = utils.pipeline(s)
@@ -121,13 +122,15 @@ class Agent(threading.Thread):
         total_pi_loss = 0
         total_entropy = 0
         total_value_loss = 0
+        train_step = 0
 
         while True:
+            train_step += 1
             states = []
             actions = []
             rewards = []
             dones = []
-            for i in range(32):
+            for i in range(256):
 
                 a, max_prob = self.choose_action(copy.deepcopy(history))
                 total_max_prob += max_prob
@@ -163,14 +166,18 @@ class Agent(threading.Thread):
                     done = False
                     total_reward = 0
                     time_step = 0
-                    self.episode = 0
+                    self.episode += 1
                     episode_step = 0
                     total_max_prob = 0
                     total_pi_loss = 0
                     total_entropy = 0
                     total_value_loss = 0
 
-            self.train_with_done(states, actions, rewards, dones)
+            pi_loss, value_loss, entropy = self.train_with_done(states, actions, rewards, dones)
+            self.sess.run(self.global_to_local)
+            self.writer.add_scalar('pi_loss', pi_loss, train_step)
+            self.writer.add_scalar('value_loss', value_loss, train_step)
+            self.writer.add_scalar('entropy', entropy, train_step)
 
     def choose_action(self, states):
         """
