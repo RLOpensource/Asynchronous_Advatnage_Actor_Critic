@@ -116,3 +116,27 @@ def discount_reward(rewards, gamma=0.99):
         discounted_r[t] = running_add
 
     return discounted_r
+
+def discount_reward_with_done(rewards, done, gamma=0.99):
+    """Returns discounted rewards
+    Args:
+        rewards (1-D array): Reward array
+        gamma (float): Discounted rate
+    Returns:
+        discounted_rewards: same shape as `rewards`
+    Notes:
+        In Pong, when the reward can be {-1, 0, 1}.
+        However, when the reward is either -1 or 1,
+        it means the game has been reset.
+        Therefore, it's necessaray to reset `running_add` to 0
+        whenever the reward is nonzero
+    """
+    discounted_r = np.zeros_like(rewards, dtype=np.float32)
+    running_add = 0
+    for t in reversed(range(len(rewards))):
+        if done[t]:
+            running_add = 0
+        running_add = running_add * gamma + rewards[t]
+        discounted_r[t] = running_add
+
+    return discounted_r
