@@ -105,6 +105,8 @@ class Agent(threading.Thread):
                     total_pi_loss = 0
                     total_entropy = 0
                     total_value_loss = 0
+                if d:
+                    break
 
             pi_loss, value_loss, entropy = self.train_with_done(states, actions, rewards, dones)
             self.sess.run(self.global_to_local)
