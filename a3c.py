@@ -23,16 +23,6 @@ class A3CNetwork(object):
             self.advantage = tf.placeholder(tf.float32, shape=[None], name="advantage")
 
             action_onehot = tf.one_hot(self.actions, output_dim, name="action_onehot")
-            #net = self.states
-
-            #net = tf.layers.conv2d(inputs=net, filters=16, kernel_size=[8, 8], strides=[4, 4], padding='VALID', activation=tf.nn.relu)
-            #net = tf.layers.conv2d(inputs=net, filters=32, kernel_size=[4, 4], strides=[2, 2], padding='VALID', activation=tf.nn.relu)
-            
-            #net = tf.layers.flatten(net)
-            #net = tf.layers.dense(inputs=net, units=256, activation=tf.nn.relu)
-            
-            #self.action_prob = tf.layers.dense(inputs=net, units=output_dim, activation=tf.nn.softmax)
-            #self.values = tf.squeeze(tf.layers.dense(inputs=net, units=1, activation=None))
 
             self.action_prob, self.values = core.cnn_model(self.states, output_dim, tf.nn.relu, tf.nn.softmax)
 
@@ -55,7 +45,6 @@ class A3CNetwork(object):
             # optimization
             self.total_loss = self.actor_loss + self.value_loss * .5
             self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
-            #self.optimizer = tf.train.RMSPropOptimizer(learning_rate=0.001)
 
         var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=name)
         self.gradients = self.optimizer.compute_gradients(self.total_loss, var_list)
