@@ -26,7 +26,7 @@ def main():
     env_list = []
 
     for id in range(n_threads):
-        env = gym.make("Pong-v0")
+        env = gym.make("PongDeterministic-v4")
 
         single_agent = async_agent.Agent(env=env,
                                 session=sess,
