@@ -11,7 +11,7 @@ import copy
 
 class Agent(threading.Thread):
 
-    def __init__(self, session, env, coord, name, global_network, input_shape, output_dim, logdir=None):
+    def __init__(self, session, coord, name, global_network, input_shape, output_dim, logdir=None):
         """Agent worker thread
         Args:
             session (tf.Session): Tensorflow session needs to be shared
@@ -31,7 +31,6 @@ class Agent(threading.Thread):
 
         self.input_shape = input_shape
         self.output_dim = output_dim
-        self.env = env
         self.sess = session
         self.coord = coord
         self.name = name
@@ -41,6 +40,8 @@ class Agent(threading.Thread):
 
     def run(self):
         self.sess.run(self.global_to_local)
+
+        self.env = gym.make('PongDeterministic-v4')
         
         s = self.env.reset()
         s = utils.pipeline(s)
@@ -148,11 +149,15 @@ class Agent(threading.Thread):
         advantage -= np.mean(advantage)
         advantage /= np.std(advantage) + 1e-8
 
+        sample_range = np.arange(len(states))
+        np.random.shuffle(sample_range)
+        shuffled_idx = sample_range[:32]
+
         feed = {
-            self.local.states: states,
-            self.local.actions: actions,
-            self.local.rewards: rewards,
-            self.local.advantage: advantage
+            self.local.states: [states[i] for i in shuffled_idx],
+            self.local.actions: [actions[i] for i in shuffled_idx],
+            self.local.rewards: [rewards[i] for i in shuffled_idx],
+            self.local.advantage: [advantage[i] for i in shuffled_idx]
         }
 
         gradients, pi_loss, value_loss, entropy = self.sess.run([self.local.gradients, self.local.pi_loss, self.local.mean_value_loss, self.local.entropy], feed)

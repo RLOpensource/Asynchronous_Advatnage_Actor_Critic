@@ -23,12 +23,10 @@ def main():
                                 output_dim=output_dim)
 
     thread_list = []
-    env_list = []
 
     for id in range(n_threads):
-        env = gym.make("PongDeterministic-v4")
 
-        single_agent = async_agent.Agent(env=env,
+        single_agent = async_agent.Agent(
                                 session=sess,
                                 coord=coord,
                                 name="thread_{}".format(id),
@@ -36,7 +34,6 @@ def main():
                                 input_shape=input_shape,
                                 output_dim=output_dim)
         thread_list.append(single_agent)
-        env_list.append(env)
 
     init = tf.global_variables_initializer()
     sess.run(init)
